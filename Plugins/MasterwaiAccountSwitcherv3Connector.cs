@@ -196,16 +196,11 @@ namespace SmartBot.Plugins
         private void StartSleep()
         {
             Bot.Log("Going into sleep mode.");
-            Bot.Log("STEP 1");
             if (_sleeping) return;
-            Bot.Log("STEP 2");
             _sleeping = true;
             Bot.CloseHs();
-            Bot.Log("STEP 3");
             Bot.StopRelogger();
-            Bot.Log("STEP 4");
             Bot.SuspendBot();
-            Bot.Log("STEP 5");
         }
 
         private void StopSleep()
