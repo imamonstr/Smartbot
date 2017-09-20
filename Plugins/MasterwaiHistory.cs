@@ -2,6 +2,7 @@ using SmartBot.Plugins.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using MasterwaiLib;
 using SmartBot.Database;
 using SmartBotStats;
@@ -38,62 +39,6 @@ namespace SmartBot.Plugins
         {
             SaveGame(false);
         }
-
-        private void SaveGame(bool result)
-        {
-            var board = Bot.CurrentBoard;
-            if (board == null) return;
-            var played = board.EnemyGraveyard;
-            played.AddRange(board.MinionEnemy.Select(x => x.Template.Id));
-            played = played.Where(x => CardTemplate.LoadFromId(x).IsCollectible).ToList();
-
-            var dic = new Dictionary<Card.Cards, int>();
-
-            foreach (var card in played.ToArray())
-            {
-                if (dic.ContainsKey(card))
-                {
-                    if (dic[card] == 2)
-                    {
-                        played.Remove(card);
-                    }
-                    else
-                    {
-                        dic[card]++;
-                    }
-                }
-                else
-                {
-                    dic[card] = 1;
-                }
-            }
-            var mode = Bot.CurrentMode();
-            var wild = mode == Bot.Mode.RankedWild || mode == Bot.Mode.UnrankedWild;
-            var game = new Game(played: played, deck: board.Deck, offered: _latestOffered, kept: _latestKept, result: result, hero: board.FriendClass, opponnent: board.EnemyClass, mode: Bot.CurrentMode(), rank: Bot.GetPlayerDatas().GetRank(wild), server: GetCurrentServer(), account: Bot.GetCurrentAccount());
-            global::MasterwaiHistory.MasterwaiHistory.AddGame(game);
-        }
-
-        private Server GetCurrentServer()
-        {
-            switch (Bot.CurrentRegion())
-            {
-                case BnetRegion.REGION_EU:
-                    return Server.Europe;
-
-                case BnetRegion.REGION_US:
-                    return Server.Americas;
-
-                case BnetRegion.REGION_KR:
-                    return Server.Asia;
-
-                case BnetRegion.REGION_CN:
-                    return Server.China;
-
-                default:
-                    return Server.Invalid;
-            }
-        }
-
 
         public override void OnHandleMulligan(List<Card.Cards> choices, Card.CClass opponentClass, Card.CClass ownClass)
         {
@@ -143,6 +88,82 @@ namespace SmartBot.Plugins
             Bot.Log("");
         }
 
+
+        private void SaveGame(bool result)
+        {
+            var board = Bot.CurrentBoard;
+            if (board == null) return;
+            var played = board.EnemyGraveyard;
+            played.AddRange(board.MinionEnemy.Select(x => x.Template.Id));
+            played = played.Where(x => CardTemplate.LoadFromId(x).IsCollectible).ToList();
+
+            var opponnentPlayed = board.FriendGraveyard;
+            opponnentPlayed.AddRange(board.MinionFriend.Select(x => x.Template.Id));
+            opponnentPlayed = opponnentPlayed.Where(x => CardTemplate.LoadFromId(x).IsCollectible).ToList();
+
+            CleanCollection(played);
+            CleanCollection(opponnentPlayed);
+            
+            var mode = Bot.CurrentMode();
+            var wild = mode == Bot.Mode.RankedWild || mode == Bot.Mode.UnrankedWild;
+            var game = new Game(mode: Bot.CurrentMode(),
+                rank: Bot.GetPlayerDatas().GetRank(wild),
+                server: GetCurrentServer(),
+                account: Bot.GetCurrentAccount(),
+                offered: _latestOffered,
+                kept: _latestKept,
+                result: result,
+                played: played,
+                deck: board.Deck,
+                hero: board.FriendClass,
+                opponnentPlayed: opponnentPlayed,
+                opponnentHero: board.EnemyClass);
+            global::MasterwaiHistory.MasterwaiHistory.AddGame(game);
+        }
+
+        private Server GetCurrentServer()
+        {
+            switch (Bot.CurrentRegion())
+            {
+                case BnetRegion.REGION_EU:
+                    return Server.Europe;
+
+                case BnetRegion.REGION_US:
+                    return Server.Americas;
+
+                case BnetRegion.REGION_KR:
+                    return Server.Asia;
+
+                case BnetRegion.REGION_CN:
+                    return Server.China;
+
+                default:
+                    return Server.Invalid;
+            }
+        }
+
+        private void CleanCollection<T>(List<T> list)
+        {
+            var dict = new Dictionary<T, int>();
+            foreach (T t in list)
+            {
+                if (dict.ContainsKey(t))
+                {
+                    if (dict[t] == 2)
+                    {
+                        list.Remove(t);
+                    }
+                    else
+                    {
+                        dict[t]++;
+                    }
+                }
+                else
+                {
+                    dict[t] = 1;
+                }
+            }
+        }
 
         #region Disposing
 
