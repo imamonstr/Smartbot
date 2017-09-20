@@ -93,11 +93,12 @@ namespace SmartBot.Plugins
         {
             var board = Bot.CurrentBoard;
             if (board == null) return;
-            var played = board.EnemyGraveyard;
+
+            var played = board.EnemyGraveyard.ToList();
             played.AddRange(board.MinionEnemy.Select(x => x.Template.Id));
             played = played.Where(x => CardTemplate.LoadFromId(x).IsCollectible).ToList();
 
-            var opponnentPlayed = board.FriendGraveyard;
+            var opponnentPlayed = board.FriendGraveyard.ToList();
             opponnentPlayed.AddRange(board.MinionFriend.Select(x => x.Template.Id));
             opponnentPlayed = opponnentPlayed.Where(x => CardTemplate.LoadFromId(x).IsCollectible).ToList();
 
