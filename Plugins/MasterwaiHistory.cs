@@ -146,7 +146,7 @@ namespace SmartBot.Plugins
         private void CleanCollection<T>(List<T> list)
         {
             var dict = new Dictionary<T, int>();
-            foreach (T t in list)
+            foreach (T t in list.ToArray())
             {
                 if (dict.ContainsKey(t))
                 {
