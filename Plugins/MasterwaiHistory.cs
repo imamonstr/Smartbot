@@ -1,8 +1,8 @@
 using SmartBot.Plugins.API;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using System.Security.Policy;
 using MasterwaiLib;
 using SmartBot.Database;
 using SmartBotStats;
@@ -17,6 +17,11 @@ namespace SmartBot.Plugins
         {
             Name = "MasterwaiHistory";
         }
+
+        [DisplayName("Timeframe to load\r\ngames from (days).\r\n[0 -> 30]")]
+        public int LoadTime { get; set; }
+        [DisplayName("Delete games older\r\nthan this (days).\r\n[0 -> Disabled]")]
+        public int DeleteTime { get; set; }
     }
 
     public class MasterwaiHistory : Plugin
@@ -27,7 +32,14 @@ namespace SmartBot.Plugins
 
         public override void OnPluginCreated()
         {
+            var d = (MasterwaiHistoryData)DataContainer;
+            global::MasterwaiHistory.MasterwaiHistory.Init(d.LoadTime == 0 ? 30 : d.LoadTime);
             _disposable = Program.BootApi(8999);
+            if (d.DeleteTime != 0)
+            {
+                global::MasterwaiHistory.MasterwaiHistory.DeleteOld(d.DeleteTime);
+            }
+            
         }
 
         public override void OnVictory()
@@ -60,9 +72,9 @@ namespace SmartBot.Plugins
                 strName += CardTemplate.LoadFromId(cards).Name + ", ";
                 strRaw += cards + ", ";
             }
-            Bot.Log("[NAMES]" + strName);
-            Bot.Log("[RAW]" + strRaw);
-            Bot.Log("");
+            //Bot.Log("[NAMES]" + strName);
+            //Bot.Log("[RAW]" + strRaw);
+            //Bot.Log("");
 
             strName = "[HISTORY] Replaced: ";
             strRaw = "[HISTORY] Replaced: ";
@@ -71,9 +83,9 @@ namespace SmartBot.Plugins
                 strName += CardTemplate.LoadFromId(cards).Name + ", ";
                 strRaw += cards + ", ";
             }
-            Bot.Log("[NAMES]" + strName);
-            Bot.Log("[RAW]" + strRaw);
-            Bot.Log("");
+            //Bot.Log("[NAMES]" + strName);
+            //Bot.Log("[RAW]" + strRaw);
+            //Bot.Log("");
 
 
             strName = "[HISTORY] Kept: ";
@@ -83,11 +95,15 @@ namespace SmartBot.Plugins
                 strName += CardTemplate.LoadFromId(cards).Name + ", ";
                 strRaw += cards + ", ";
             }
-            Bot.Log("[NAMES]" + strName);
-            Bot.Log("[RAW]" + strRaw);
-            Bot.Log("");
+            //Bot.Log("[NAMES]" + strName);
+            //Bot.Log("[RAW]" + strRaw);
+            //Bot.Log("");
         }
 
+        public override void OnDecklistUpdate()
+        {
+            global::MasterwaiHistory.MasterwaiHistory.AddDeckNames(Bot.GetDecks());
+        }
 
         private void SaveGame(bool result)
         {
