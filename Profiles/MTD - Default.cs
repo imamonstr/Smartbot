@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SmartBot.Database;
 using SmartBot.Plugins.API;
 
 namespace SmartBotProfiles
@@ -40,6 +41,38 @@ namespace SmartBotProfiles
             double value = (board.ManaAvailable + board.MaxMana) / inHand;
 
             p.DiscoverSimulationValueThresholdPercent = (float)((value > 1 ? Math.Sqrt(value) : value) * 15) + 3;
+
+
+            Bot.Log(board.HeroFriend.Template.Name);
+            Bot.Log(board.HeroEnemy.Template.Name);
+
+            Bot.Log("");
+            
+            foreach (var cards in board.FriendGraveyard)
+            {
+                Bot.Log(CardTemplate.LoadFromId(cards).Name);
+                Bot.Log(CardTemplate.LoadFromId(cards).Race.ToString());
+                Bot.Log("");
+            }
+
+            Bot.Log("");
+
+
+            if (board.ManaAvailable == 10 && board.Hand.Exists(x => x.Template.Id == Cards.BloodreaverGuldan))
+            {
+                foreach (Card card in board.Hand)
+                {
+                    Bot.Log(card.Template.Name);
+                    if (card.Template.Type == Card.CType.SPELL)
+                    {
+                        p.SpellsModifiers.AddOrUpdate(card.Template.Id, new Modifier(500));
+                    }
+                    else if(card.Template.Type == Card.CType.MINION)
+                    {
+                        p.MinionsModifiers.AddOrUpdate(card.Template.Id, new Modifier(500));
+                    }
+                }
+            }
 
             return p;
         }
