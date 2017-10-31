@@ -57,6 +57,7 @@ namespace SmartBotProfiles
 
             Bot.Log("");
 
+            p.SpellsModifiers.AddOrUpdate(ArmorUp, new Modifier());
 
             if (board.ManaAvailable == 10 && board.Hand.Exists(x => x.Template.Id == Cards.BloodreaverGuldan))
             {
