@@ -57,11 +57,11 @@ namespace SmartBot.Mulligan
 
             AddLog(Divider);
 
-            AddLog("MasterwaiArenaMulligan");
+            AddLog("MasterwaiMulligan");
 
             AddLog(Divider);
 
-            AddLog("Tierlist by Zadamanty");
+            AddLog("Tierlist");
             AddLog("Version: " + tierlistVer);
             AddLog("Name: " + tierlistName);
 
@@ -99,6 +99,9 @@ namespace SmartBot.Mulligan
                 (Bot.CurrentMode() == Bot.Mode.Arena || Bot.CurrentMode() == Bot.Mode.Arena ?
                 _settingsManager.GetString("Decks", "Arena", "NoSetting") :
                 _settingsManager.GetString("Decks", Bot.CurrentDeck().Name));
+
+            //var tierlistPath = Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\" +
+            //                   _settingsManager.GetString("Decks", "Taunt Quest");
 
             _manager = new IniManager(tierlistPath);
             
