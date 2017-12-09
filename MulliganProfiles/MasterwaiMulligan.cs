@@ -23,7 +23,7 @@ namespace SmartBot.Mulligan
         private const string Divider = "======================================================";
 
         private string _log = "";
-        
+
         private List<Card.Cards> _deck;
         private List<Card.Cards> _choices;
         private List<Card.Cards> _hand;
@@ -31,7 +31,7 @@ namespace SmartBot.Mulligan
         private Card.CClass _opponentClass;
         private Card.CClass _ownClass;
         private bool _coin;
-        
+
         private Dictionary<Card.Cards, Mcard> _cardInfo;
         private readonly IniManager _settingsManager = new IniManager(Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\TierlistSettings.ini");
         private IniManager _manager;
@@ -95,16 +95,23 @@ namespace SmartBot.Mulligan
         public List<Card.Cards> HandleMulligan(List<Card.Cards> choices, Card.CClass opponentClass, Card.CClass ownClass)
         {
             GetDeck();
-            var tierlistPath = Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\" +
-                (Bot.CurrentMode() == Bot.Mode.Arena || Bot.CurrentMode() == Bot.Mode.Arena ?
-                _settingsManager.GetString("Decks", "Arena", "NoSetting") :
-                _settingsManager.GetString("Decks", Bot.CurrentDeck().Name));
 
-            //var tierlistPath = Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\" +
-            //                   _settingsManager.GetString("Decks", "Taunt Quest");
+            var tierlistPath = Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\";
+
+            if (Bot.CurrentMode() == Bot.Mode.Arena || Bot.CurrentMode() == Bot.Mode.Arena)
+            {
+                var arenaTierlist = _settingsManager.GetString("Decks", "Arena", "NoSetting");
+                tierlistPath += arenaTierlist == "NoSetting" ? "SovietArena_TierList.ini" : arenaTierlist;
+            }
+            else
+            {
+                var rankedTierList = _settingsManager.GetString("Decks", Bot.CurrentDeck().Name, "NoSetting");
+                tierlistPath += rankedTierList == "NoSetting" ? "SovietArena_TierList.ini" : rankedTierList;
+
+            }
 
             _manager = new IniManager(tierlistPath);
-            
+
             _keep = new List<Card.Cards>();
             _opponentClass = opponentClass;
             _ownClass = ownClass;
@@ -112,7 +119,7 @@ namespace SmartBot.Mulligan
             _hand = _choices.ToList();
 
             SimBoard.Opponnent = opponentClass;
-            
+
             var curveImportance = ParseDouble(_manager.GetString("curve", "curveImportance", "0.5"));
             var fourDropMod = ParseDouble(_manager.GetString("curve", "fourDropMod", "1"));
             SimBoard.OneDropMod = ParseDouble(_manager.GetString("curve", "oneDropMod", "4")) / fourDropMod * curveImportance;
@@ -186,7 +193,7 @@ namespace SmartBot.Mulligan
                 {
                     var ret = new List<Card.Cards>(x);
                     ret.AddRange(comboCards);
-                    if(_coin) ret.Add(Card.Cards.GAME_005);
+                    if (_coin) ret.Add(Card.Cards.GAME_005);
                     return ret;
                 }).ToList();
                 double combinationPts = (double)startingHands.Average(x => CurveSim(x));
