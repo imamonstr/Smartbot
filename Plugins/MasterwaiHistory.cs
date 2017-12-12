@@ -29,7 +29,7 @@ namespace SmartBot.Plugins
         private List<Card.Cards> _latestOffered;
         private List<Card.Cards> _latestKept;
         private IDisposable _disposable;
-        private MasterwaiHistoryv2.MasterwaiHistory _history;
+        //private MasterwaiHistoryv2.MasterwaiHistory _history;
 
         public override void OnPluginCreated()
         {
@@ -41,12 +41,12 @@ namespace SmartBot.Plugins
                 global::MasterwaiHistory.MasterwaiHistory.DeleteOld(d.DeleteTime);
             }
 
-            _history = new MasterwaiHistoryv2.MasterwaiHistory(AppDomain.CurrentDomain.BaseDirectory + "Logs\\Masterwai\\GameDatav2\\", TimeSpan.FromDays(d.LoadTime == 0 ? 30 : d.LoadTime));
-            MasterwaiHistoryv2.MasterwaiHistory.GlobalHistory = _history;
-            if (d.DeleteTime != 0)
-            {
-                _history.DeleteOld(TimeSpan.FromDays(d.DeleteTime));
-            }
+            //_history = new MasterwaiHistoryv2.MasterwaiHistory(AppDomain.CurrentDomain.BaseDirectory + "Logs\\Masterwai\\GameDatav2\\", TimeSpan.FromDays(d.LoadTime == 0 ? 30 : d.LoadTime));
+            //MasterwaiHistoryv2.MasterwaiHistory.GlobalHistory = _history;
+            //if (d.DeleteTime != 0)
+            //{
+            //    _history.DeleteOld(TimeSpan.FromDays(d.DeleteTime));
+            //}
         }
 
         public override void OnVictory()
@@ -143,21 +143,21 @@ namespace SmartBot.Plugins
                 opponnentPlayed: opponnentPlayed,
                 opponnentHero: board.EnemyClass);
 
-            var game2 = new MasterwaiHistoryv2.Game(mode: Bot.CurrentMode(),
-                rank: Bot.GetPlayerDatas().GetRank(wild),
-                server: (MasterwaiHistoryv2.Server)(int)GetCurrentServer(),
-                account: Bot.GetCurrentAccount(),
-                offered: _latestOffered,
-                kept: _latestKept,
-                result: result,
-                played: played,
-                deck: board.Deck,
-                hero: board.FriendClass,
-                opponnentPlayed: opponnentPlayed,
-                opponnentHero: board.EnemyClass);
+            //var game2 = new MasterwaiHistoryv2.Game(mode: Bot.CurrentMode(),
+            //    rank: Bot.GetPlayerDatas().GetRank(wild),
+            //    server: (MasterwaiHistoryv2.Server)(int)GetCurrentServer(),
+            //    account: Bot.GetCurrentAccount(),
+            //    offered: _latestOffered,
+            //    kept: _latestKept,
+            //    result: result,
+            //    played: played,
+            //    deck: board.Deck,
+            //    hero: board.FriendClass,
+            //    opponnentPlayed: opponnentPlayed,
+            //    opponnentHero: board.EnemyClass);
 
             global::MasterwaiHistory.MasterwaiHistory.AddGame(game);
-            _history.AddGame(game2);
+            //_history.AddGame(game2);
         }
 
         private Server GetCurrentServer()
@@ -214,7 +214,7 @@ namespace SmartBot.Plugins
         public override void Dispose()
         {
             _disposable.Dispose();
-            _history.Dispose();
+            //_history.Dispose();
         }
 
         #endregion
