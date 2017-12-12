@@ -3,21 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
 using SmartBot.Database;
 using SmartBot.Discover;
 using SmartBot.Plugins.API;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Discover
 {
     public class Mtd : DiscoverPickHandler
     {
-        private string _log = "\r\n[-MasterwaiDisco-]";
+        private string _log = LogHead;
+        private const string Divider = "======================================================";
+        private const string LogHead = "\r\n" + Divider + "\r\n[-MasterwaiDisco-]";
 
         public delegate int EvalMethod(Board board);
-
-        public static readonly Tierlist TierList = Tierlist.FromJason(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "DiscoverCC\\ParsedTierlist.json"));
-
+        private static readonly JsonSerializerSettings S = new JsonSerializerSettings
+        {
+            Converters = { new StringEnumConverter { AllowIntegerValues = false } }
+        };
+        public static readonly Tierlist TierList = JsonConvert.DeserializeObject<Tierlist>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "DiscoverCC\\ParsedTierlist.json"), S);
         private static readonly Dictionary<string, DeckLogic> CardDictionarys = new Dictionary<string, DeckLogic>
         {
             {"Universal", new Universal()}
@@ -39,77 +44,58 @@ namespace Discover
                 return mirrorOfDoom;
             }
 
-            if (originCard == Cards.FreeFromAmber)
-            {
-                return choices.OrderByDescending(x =>
-                    {
-                        var temp = CardTemplate.LoadFromId(x);
-                        return temp.Atk * temp.Health;
-                    })
-                    .First();
-            }
-
-            //Try discover logic for usual cards, if it fails pick left card and print error to log
             try
             {
                 choices = choices.OrderByDescending(x => GetValue(x, board)).ToList();
                 var choice = choices.First();
-                AddLog("Pick: " + CardTemplate.LoadFromId(choice).Name);
-                foreach (var cards in choices)
-                {
-                    AddLog(CardTemplate.LoadFromId(cards).Name);
-                }
                 PrintLog();
                 return choice;
             }
-            catch (Exception e)
+            catch (InvalidOperationException)
             {
-                _log = "\r\n[-MasterwaiDisco-]";
-                Bot.Log("Error in discover");
-                Bot.Log(e.Message);
-                Bot.Log("Falling back to default discover logic.");
+                AddLog("Card not found in Tierlist. Falling back to Smartbot default Discover.");
+                PrintLog();
                 return Card.Cards.CRED_01;
             }
         }
 
         private int GetValue(Card.Cards card, Board board)
         {
-            int value; //Values saved in this var for debug printouts
-            AddLog(" -- Name: " + CardTemplate.LoadFromId(card).Name);
-
-            //Find dictionary for current deck
-            var deck = "Universal";
-
+            AddLog("Name: " + CardTemplate.LoadFromId(card).Name);
+            
+            var deck = "Universal"; //Next level deck identification I know. Thank you.
+            AddLog("Deck identified: " + deck);
 
             var specificDeckLogic = CardDictionarys.ContainsKey(deck) ? CardDictionarys[deck] : CardDictionarys["Universal"];
             DeckLogic deckLogic;
-
-            AddLog("Deck: " + deck + "\r\n");
+            
             if (!specificDeckLogic.CardValues.ContainsKey(card))
             {
-                AddLog("No specific deck logic. Falling back to Universal logic.\r\n");
+                AddLog("Deckspecific logic: " + "No.");
                 deckLogic = CardDictionarys["Universal"];
             }
             else
             {
+                AddLog("Deckspecific logic: " + "Yes.");
                 deckLogic = specificDeckLogic;
             }
 
-
-            //Use custom eval method if there is one
+            int value;
             if (deckLogic.CardValues.ContainsKey(card))
             {
+                AddLog("Custom logic: " + "Yes.");
                 value = deckLogic.CardValues[card](board);
             }
             else
             {
-                AddLog("No custom logic. Falling back to Tierlist.\r\n");
+                AddLog("Custom logic: " + "No.");
                 value = TierList.GetCardValue(card, board.FriendClass);
             }
 
             value = specificDeckLogic.Modifiers(card, board, value);
 
-            AddLog("Value: " + value + "\r\n");
+            AddLog("Card value: " + value);
+            AddLog("");
             return value;
         }
 
@@ -123,8 +109,8 @@ namespace Discover
         //Print log for current discover and reset string to header
         private void PrintLog()
         {
-            Bot.Log(_log + "\r\n[-MasterwaiDisco-]");
-            _log = "\r\n[-MasterwaiDisco-]";
+            Bot.Log(_log + "\r\n[-MasterwaiDisco-]\r\n" + Divider);
+            _log = LogHead;
         }
     }
 
@@ -264,7 +250,7 @@ namespace Discover
 
         private static int MindBlast(Board board)
         {
-            return (int) ((30 - board.HeroEnemy.CurrentHealth)*6.5);
+            return (int)((30 - board.HeroEnemy.CurrentHealth) * 6.5);
         }
 
         private static int InnerFire(Board board)
@@ -582,7 +568,7 @@ namespace Discover
         private static int Arcanologist(Board board)
         {
             var v = Mtd.TierList.GetCardValue(Cards.Arcanologist, board.FriendClass);
-            return  board.Deck.Any(x => CardTemplate.LoadFromId(x).IsSecret) ? v :  Mtd.TierList.GetCardValue(Cards.RiverCrocolisk, Card.CClass.NONE);
+            return board.Deck.Any(x => CardTemplate.LoadFromId(x).IsSecret) ? v : Mtd.TierList.GetCardValue(Cards.RiverCrocolisk, Card.CClass.NONE);
         }
 
         #endregion
@@ -660,23 +646,6 @@ namespace Discover
     {
         [DataMember] public List<ArenaCardScore> Cards;
 
-        //Load from json file
-        public static Tierlist FromJason(string json)
-        {
-            var jsonSerializer = new DataContractJsonSerializer(typeof (Tierlist));
-
-            using (Stream stream = new MemoryStream())
-            {
-                using (var writer = new StreamWriter(stream))
-                {
-                    writer.Write(json);
-                    writer.Flush();
-                    stream.Position = 0;
-                    return (Tierlist) jsonSerializer.ReadObject(stream);
-                }
-            }
-        }
-
         //Get value of certain card in certain class
         public int GetCardValue(Card.Cards card, Card.CClass friendlyClass)
         {
@@ -686,11 +655,11 @@ namespace Discover
             try
             {
                 //If there is no specific value for the requested class, use neutral value.
-                return (int) Cards.Find(x => x.Id == card).Scores[cclass] == 0 ? (int) Cards.Find(x => x.Id == card).Scores[Card.CClass.NONE] : (int) Cards.Find(x => x.Id == card).Scores[cclass];
+                return (int)Cards.Find(x => x.Id == card).Scores[cclass] == 0 ? (int)Cards.Find(x => x.Id == card).Scores[Card.CClass.NONE] : (int)Cards.Find(x => x.Id == card).Scores[cclass];
             }
             catch (Exception e)
             {
-                throw new Exception("The card " + card + " could not be found in the Tierlist.", e);
+                throw new InvalidOperationException("The card " + card + " could not be found in the Tierlist.", e);
             }
         }
     }
@@ -700,7 +669,8 @@ namespace Discover
     {
         [DataMember] public Card.Cards Id;
 
-        [DataMember] public Dictionary<Card.CClass, double> Scores = new Dictionary<Card.CClass, double>
+        [DataMember]
+        public Dictionary<Card.CClass, double> Scores = new Dictionary<Card.CClass, double>
         {
             {Card.CClass.DRUID, 0}, {Card.CClass.HUNTER, 0}, {Card.CClass.MAGE, 0}, {Card.CClass.PALADIN, 0}, {Card.CClass.PRIEST, 0}, {Card.CClass.ROGUE, 0}, {Card.CClass.WARLOCK, 0}, {Card.CClass.WARRIOR, 0}, {Card.CClass.SHAMAN, 0}, {Card.CClass.NONE, 0}
         };

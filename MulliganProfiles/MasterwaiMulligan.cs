@@ -18,7 +18,7 @@ namespace SmartBot.Mulligan
         private const string DeckPath = "D:\\Smartbot\\Logs\\Masterwai\\DebugDecks\\ ROGUE 21-11-2017 -- 19.37.27.txt";
         private readonly string _logDirPath = Directory.GetCurrentDirectory() + @"\Logs\Masterwai\";
         private readonly string _logPath = Directory.GetCurrentDirectory() + @"\Logs\Masterwai\MasterwaiArenaMulligan.txt";
-        private readonly string _decksDirPath = Directory.GetCurrentDirectory() + @"\Logs\Masterwai\DebugDecks\";
+        private static readonly string DecksDirPath = "D:\\Smartbot" + "\\Logs\\Masterwai\\DebugDecks\\";
 
         private const string Divider = "======================================================";
 
@@ -35,6 +35,21 @@ namespace SmartBot.Mulligan
         private Dictionary<Card.Cards, Mcard> _cardInfo;
         private readonly IniManager _settingsManager = new IniManager(Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\TierlistSettings.ini");
         private IniManager _manager;
+
+        public MasterwaiArena()
+        {
+            foreach (var info in Directory.GetFiles(DecksDirPath).Select(x => new FileInfo(x)).Where(x => x.LastWriteTimeUtc < DateTime.UtcNow - TimeSpan.FromDays(5)))
+            {
+                try
+                {
+                    info.Delete();
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+        }
 
         private void AddLog(string s)
         {
@@ -154,10 +169,10 @@ namespace SmartBot.Mulligan
                         // ignored
                     }
                 }
-                Directory.CreateDirectory(_decksDirPath);
+                Directory.CreateDirectory(DecksDirPath);
                 var now = DateTime.UtcNow;
                 File.WriteAllText(String.Format("{0} \\ {1} {2}-{3}-{4} -- {5}.{6}.{7}.txt",
-                    _decksDirPath, ownClass, now.Day, now.Month, now.Year, now.Hour, now.Minute, now.Second), SimpleSerializer.ToJason(_deck));
+                    DecksDirPath, ownClass, now.Day, now.Month, now.Year, now.Hour, now.Minute, now.Second), SimpleSerializer.ToJason(_deck));
             }
 
             StartLog();
