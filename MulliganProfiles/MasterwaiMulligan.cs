@@ -38,16 +38,23 @@ namespace SmartBot.Mulligan
 
         public MasterwaiArena()
         {
-            foreach (var info in Directory.GetFiles(DecksDirPath).Select(x => new FileInfo(x)).Where(x => x.LastWriteTimeUtc < DateTime.UtcNow - TimeSpan.FromDays(5)))
+            try
             {
-                try
+                foreach (var info in Directory.GetFiles(DecksDirPath).Select(x => new FileInfo(x)).Where(x => x.LastWriteTimeUtc < DateTime.UtcNow - TimeSpan.FromDays(5)))
                 {
-                    info.Delete();
+                    try
+                    {
+                        info.Delete();
+                    }
+                    catch (Exception)
+                    {
+                        // ignored
+                    }
                 }
-                catch (Exception)
-                {
-                    // ignored
-                }
+            }
+            catch (Exception)
+            {
+                // ignored
             }
         }
 
