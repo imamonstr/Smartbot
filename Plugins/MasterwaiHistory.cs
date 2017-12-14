@@ -28,6 +28,7 @@ namespace SmartBot.Plugins
     {
         private List<Card.Cards> _latestOffered;
         private List<Card.Cards> _latestKept;
+        private List<Card.Cards> _latestTurnOneHand;
         private IDisposable _disposable;
         //private MasterwaiHistoryv2.MasterwaiHistory _history;
 
@@ -43,10 +44,10 @@ namespace SmartBot.Plugins
 
             //_history = new MasterwaiHistoryv2.MasterwaiHistory(AppDomain.CurrentDomain.BaseDirectory + "Logs\\Masterwai\\GameDatav2\\", TimeSpan.FromDays(d.LoadTime == 0 ? 30 : d.LoadTime));
             //MasterwaiHistoryv2.MasterwaiHistory.GlobalHistory = _history;
-            //if (d.DeleteTime != 0)
-            //{
-            //    _history.DeleteOld(TimeSpan.FromDays(d.DeleteTime));
-            //}
+            if (d.DeleteTime != 0)
+            {
+                //_history.DeleteOld(TimeSpan.FromDays(d.DeleteTime));
+            }
         }
 
         public override void OnVictory()
@@ -107,6 +108,15 @@ namespace SmartBot.Plugins
             //Bot.Log("");
         }
 
+        public override void OnTurnBegin()
+        {
+            var b = Bot.CurrentBoard;
+            if (b.TurnCount == 1)
+            {
+                _latestTurnOneHand = b.Hand.Select(x => x.Template.Id).ToList();
+            }
+        }
+
         public override void OnDecklistUpdate()
         {
             global::MasterwaiHistory.MasterwaiHistory.AddDeckNames(Bot.GetDecks());
@@ -149,6 +159,7 @@ namespace SmartBot.Plugins
             //    account: Bot.GetCurrentAccount(),
             //    offered: _latestOffered,
             //    kept: _latestKept,
+            //    turnOneHand:_latestTurnOneHand,
             //    result: result,
             //    played: played,
             //    deck: board.Deck,

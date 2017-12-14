@@ -261,30 +261,7 @@ namespace SmartBot.Mulligan
 
         private void GetDeck()
         {
-            try
-            {
-                _deck = Bot.CurrentDeck().Cards.Select(card => (Card.Cards)Enum.Parse(typeof(Card.Cards), card)).ToList();
-            }
-            catch
-            {
-                if (Debug)
-                {
-                    if (File.Exists(DeckPath))
-                    {
-                        _deck = SimpleSerializer.FromJason<List<Card.Cards>>(File.ReadAllText(DeckPath));
-                    }
-                }
-                else
-                {
-                    _deck = new List<Card.Cards>
-                    {
-                        Cards.AcherusVeteran,
-                        Cards.AcherusVeteran,
-                        Cards.AcherusVeteran,
-                        Cards.AcherusVeteran,
-                    };
-                }
-            }
+            _deck = Bot.CurrentDeck().Cards.Select(card => (Card.Cards)Enum.Parse(typeof(Card.Cards), card)).ToList();
         }
 
         private double CurveSim(List<Card.Cards> hand)
