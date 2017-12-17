@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
 using Combinatorics.Collections;
-using MasterwaiMulliganLib;
+using MasterwaiMulligan;
 using SmartBot.Database;
 using SmartBot.Plugins.API;
 
@@ -14,11 +14,8 @@ namespace SmartBot.Mulligan
     [Serializable]
     public class MasterwaiArena : MulliganProfile
     {
-        private const bool Debug = true;
-        private const string DeckPath = "D:\\Smartbot\\Logs\\Masterwai\\DebugDecks\\ ROGUE 21-11-2017 -- 19.37.27.txt";
         private readonly string _logDirPath = Directory.GetCurrentDirectory() + @"\Logs\Masterwai\";
         private readonly string _logPath = Directory.GetCurrentDirectory() + @"\Logs\Masterwai\MasterwaiArenaMulligan.txt";
-        private static readonly string DecksDirPath = "D:\\Smartbot" + "\\Logs\\Masterwai\\DebugDecks\\";
 
         private const string Divider = "======================================================";
 
@@ -35,28 +32,6 @@ namespace SmartBot.Mulligan
         private Dictionary<Card.Cards, Mcard> _cardInfo;
         private readonly IniManager _settingsManager = new IniManager(Directory.GetCurrentDirectory() + @"\MulliganProfiles\MMTierlists\TierlistSettings.ini");
         private IniManager _manager;
-
-        public MasterwaiArena()
-        {
-            try
-            {
-                foreach (var info in Directory.GetFiles(DecksDirPath).Select(x => new FileInfo(x)).Where(x => x.LastWriteTimeUtc < DateTime.UtcNow - TimeSpan.FromDays(5)))
-                {
-                    try
-                    {
-                        info.Delete();
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-        }
 
         private void AddLog(string s)
         {
@@ -159,27 +134,20 @@ namespace SmartBot.Mulligan
 
             _cardInfo = _manager.GetDict(_deck, ownClass);
 
-            if (Debug)
-            {
-                AddLog(Divider);
 
-                AddLog("Deck:");
-                for (var i = 0; i < _deck.Count; i++)
+            AddLog(Divider);
+
+            AddLog("Deck:");
+            foreach (Card.Cards card in _deck)
+            {
+                try
                 {
-                    Card.Cards card = _deck[i];
-                    try
-                    {
-                        AddLog("V: " + _cardInfo[card].CardPts.ToString().PadLeft(5) + " : " + CardTemplate.LoadFromId(card).Name);
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
+                    AddLog("V: " + _cardInfo[card].CardPts.ToString().PadLeft(5) + " : " + CardTemplate.LoadFromId(card).Name);
                 }
-                Directory.CreateDirectory(DecksDirPath);
-                var now = DateTime.UtcNow;
-                File.WriteAllText(String.Format("{0} \\ {1} {2}-{3}-{4} -- {5}.{6}.{7}.txt",
-                    DecksDirPath, ownClass, now.Day, now.Month, now.Year, now.Hour, now.Minute, now.Second), SimpleSerializer.ToJason(_deck));
+                catch (Exception)
+                {
+                    // ignored
+                }
             }
 
             StartLog();
@@ -274,40 +242,6 @@ namespace SmartBot.Mulligan
         private static double ParseDouble(string str)
         {
             return double.Parse(str, CultureInfo.CreateSpecificCulture("en-US"));
-        }
-    }
-
-    public static class SimpleSerializer
-    {
-        public static T FromJason<T>(string json)
-        {
-            var jsonSerializer = new DataContractJsonSerializer(typeof(T));
-
-            using (Stream stream = new MemoryStream())
-            {
-                using (var writer = new StreamWriter(stream))
-                {
-                    writer.Write(json);
-                    writer.Flush();
-                    stream.Position = 0;
-                    return (T)jsonSerializer.ReadObject(stream);
-                }
-            }
-        }
-
-        public static string ToJason<T>(T obj)
-        {
-            using (var stream = new MemoryStream())
-            {
-
-                new DataContractJsonSerializer(typeof(T)).WriteObject(stream, obj);
-                stream.Position = 0;
-
-                using (var reader = new StreamReader(stream))
-                {
-                    return reader.ReadToEnd();
-                }
-            }
         }
     }
 }

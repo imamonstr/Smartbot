@@ -81,20 +81,11 @@ namespace SmartBot.Plugins
             _squelch = GetRandom(5, _squelchMax);
             _reactive = GetRandom(0, _reactiveMax);
             _turns = GetRandom(1, _turnsMax);
-
-            //Bot.Log("Set Values");
-            //Bot.Log("Squelch : " + _squelch);
-            //Bot.Log("Reactive : " + _reactive);
-            //Bot.Log("Turns : " + _turns);
-            //Bot.Log("");
-
         }
 
         public override void OnTurnEnd()
         {
             _turns -= 1;
-            //Bot.Log("Turns : " + _turns);
-            //Bot.Log("");
             if (_turns <= 0)
             {
                 SetValues();
@@ -104,32 +95,21 @@ namespace SmartBot.Plugins
 
         public override void OnReceivedEmote(Bot.EmoteType emoteType)
         {
-            //Bot.Log("Squelched : " + _squelched);
             if (!_squelched)
             {
-                //Bot.Log("Reactive : " + _reactive);
                 if (GetRandom(1, 100) <= _reactive)
                 {
-                    //Bot.Log("Reactive : True" );
                     if (Bot.CurrentBoard.TurnCount <= 2 && GetRandom(1, 100) <= 50)
                     {
-                        //Bot.Log("Greetings : True");
                         SendEmote(Bot.EmoteType.Greetings);
                     }
                     else
                     {
-                        //Bot.Log("Greetings : False");
                         SendEmote((Bot.EmoteType)GetRandom(0, 5));
                     }
                 }
-                else
-                {
-                    //Bot.Log("Reactive : False");
-                }
                 _squelched = GetRandom(0, 100) <= _squelch;
-                //Bot.Log("Squelched : " + _squelched);
             }
-            //Bot.Log("");
             base.OnReceivedEmote(emoteType);
         }
 
