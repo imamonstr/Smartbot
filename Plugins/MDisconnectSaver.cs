@@ -20,6 +20,7 @@ namespace SmartBot.Plugins
         private const string Divider = "======================================================";
         private const string Header = Divider + "\r\n[MDisconnectSaver]";
         private DateTime _latestLag = DateTime.MinValue;
+        private DateTime _latestLog = DateTime.MaxValue;
         private int _tickCounter;
         private bool _stopped;
 
@@ -30,6 +31,7 @@ namespace SmartBot.Plugins
 
         private void OnLog(string str)
         {
+            _latestLog = DateTime.UtcNow;
             if (str.Contains("30seconds ago"))
             {
                 Lag();
@@ -44,6 +46,10 @@ namespace SmartBot.Plugins
             if (Bot.GetAverageLatency() >= Data().LatencyThreshold || Bot.GetAverageLatency() == 0)
             {
                 Lag();
+            }
+            if (!_stopped && Bot.IsBotRunning() && _latestLog < DateTime.UtcNow - TimeSpan.FromMinutes(5))
+            {
+                Restart();
             }
             if (_stopped && _latestLag < DateTime.UtcNow - TimeSpan.FromMinutes(15))
             {
@@ -66,6 +72,13 @@ namespace SmartBot.Plugins
                 _stopped = true;
             }
             _latestLag = DateTime.UtcNow;
+        }
+
+        private void Restart()
+        {
+            Bot.Log("\r\n" + Header + "\r\nDetected timeout. Restarting Hearthstone.\r\n" + Divider);
+            Bot.CloseHs();
+            Bot.StartRelogger();
         }
 
         private MDisconnectSaverData Data()
